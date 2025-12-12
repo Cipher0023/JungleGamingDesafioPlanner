@@ -1,15 +1,13 @@
-FROM node:20-alpine
-
+FROM node:20-alpine AS development
 WORKDIR /app
 
-COPY package*.json ./
+COPY apps/api-gateway/package.json apps/api-gateway/package-lock.json* ./apps/api-gateway/
 
-RUN npm install
+RUN cd apps/api-gateway && npm install
 
-COPY . .
+COPY apps/api-gateway ./apps/api-gateway
 
-RUN npm run build
+WORKDIR /app/apps/api-gateway
 
-EXPOSE 3000
-
-CMD ["node", "src/main.js"]
+EXPOSE 3001
+CMD ["npm", "run", "start:dev"]

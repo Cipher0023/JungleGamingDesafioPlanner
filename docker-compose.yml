@@ -1,0 +1,168 @@
+services:
+  # Frontend React Application
+  web:
+    container_name: web
+    build:
+      context: .
+      dockerfile: ./apps/web/Dockerfile
+      target: development
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+    networks:
+      - challenge-network
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/apps/web/node_modules
+    # Vite PRECISA de --host → Turbo passa argumentos após --
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+
+  # API Gateway (não usa --host)
+  api-gateway:
+    container_name: api-gateway
+    build:
+      context: .
+      dockerfile: ./apps/api-gateway/Dockerfile
+      target: development
+    ports:
+      - "3001:3001"
+    volumes:
+      - .:/app
+      - ./packages:/app/packages
+      - /app/node_modules
+      - /app/apps/api-gateway/node_modules
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+    depends_on:
+      db:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+    networks:
+      - challenge-network
+    command: ["npm", "run", "dev"]
+
+  # Auth Service (não usa --host)
+  auth-service:
+    container_name: auth-service
+    build:
+      context: .
+      dockerfile: ./apps/auth-service/Dockerfile
+      target: development
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=development
+      - PORT=3002
+    depends_on:
+      db:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+    networks:
+      - challenge-network
+    volumes:
+      - .:/app
+      - ./packages:/app/packages
+      - /app/node_modules
+      - /app/apps/auth-service/node_modules
+    command: ["npm", "run", "dev"]
+
+  # Tasks Service (não usa --host)
+  tasks-service:
+    container_name: tasks-service
+    build:
+      context: .
+      dockerfile: ./apps/tasks-service/Dockerfile
+      target: development
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=development
+      - PORT=3003
+    depends_on:
+      db:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+    networks:
+      - challenge-network
+    volumes:
+      - .:/app
+      - ./packages:/app/packages
+      - /app/node_modules
+      - /app/apps/tasks-service/node_modules
+    command: ["npm", "run", "dev"]
+
+  # Notifications Service (não usa --host)
+  notifications-service:
+    container_name: notifications-service
+    build:
+      context: .
+      dockerfile: ./apps/notifications-service/Dockerfile
+      target: development
+    ports:
+      - "3004:3004"
+    environment:
+      - NODE_ENV=development
+      - PORT=3004
+    depends_on:
+      db:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+    networks:
+      - challenge-network
+    volumes:
+      - .:/app
+      - ./packages:/app/packages
+      - /app/node_modules
+      - /app/apps/notifications-service/node_modules
+    command: ["npm", "run", "dev"]
+
+  # PostgreSQL Database
+  db:
+    image: postgres:17.5-alpine3.21
+    container_name: db
+    attach: false
+    ports:
+      - "5432:5432"
+    networks:
+      - challenge-network
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: postgres
+      POSTGRES_DB: challenge-db
+
+  # RabbitMQ Message Broker
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: rabbitmq
+    attach: false
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - challenge-network
+    restart: always
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+
+volumes:
+  postgres_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
+
+networks:
+  challenge-network:
+    driver: bridge

@@ -1,0 +1,56 @@
+# Node
+node_modules
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+pnpm-debug.log
+
+# Builds locais
+dist
+build
+.next
+out
+
+# Dependências de testes
+coverage
+.nyc_output
+
+# Ambiente
+.env
+.env.*
+!.env.example
+
+# Sistema
+.DS_Store
+*.swp
+*.swo
+*~
+.tmp
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDEs/editor
+.vscode
+.idea
+*.iml
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+logs
+*.log
+
+# Testes
+test
+tests
+*.test.ts
+*.spec.ts
+jest.config.js
+
+# Outras pastas pesadas desnecessárias
+**/tmp
+**/temp
+.cache
