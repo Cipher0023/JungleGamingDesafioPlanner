@@ -43,7 +43,7 @@ services:
         condition: service_started
     networks:
       - challenge-network
-    command: ["npm", "run", "dev"]
+    command: ["npm", "run", "start:dev"]
 
   # Auth Service (não usa --host)
   auth-service:
@@ -69,7 +69,7 @@ services:
       - ./packages:/app/packages
       - /app/node_modules
       - /app/apps/auth-service/node_modules
-    command: ["npm", "run", "dev"]
+    command: ["npm", "run", "start:dev"]
 
   # Tasks Service (não usa --host)
   tasks-service:
@@ -95,7 +95,7 @@ services:
       - ./packages:/app/packages
       - /app/node_modules
       - /app/apps/tasks-service/node_modules
-    command: ["npm", "run", "dev"]
+    command: ["npm", "run", "start:dev"]
 
   # Notifications Service (não usa --host)
   notifications-service:
@@ -121,13 +121,12 @@ services:
       - ./packages:/app/packages
       - /app/node_modules
       - /app/apps/notifications-service/node_modules
-    command: ["npm", "run", "dev"]
+    command: ["npm", "run", "start:dev"]
 
   # PostgreSQL Database
   db:
     image: postgres:17.5-alpine3.21
     container_name: db
-    attach: false
     ports:
       - "5432:5432"
     networks:
@@ -144,7 +143,6 @@ services:
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     container_name: rabbitmq
-    attach: false
     ports:
       - "5672:5672"
       - "15672:15672"

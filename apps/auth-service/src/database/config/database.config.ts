@@ -8,7 +8,7 @@ export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',
   url:
     process.env.DATABASE_URL ||
-    'postgresql://postgres:password@localhost:5432/jungle_db',
+    'postgresql://postgres:password@db:5432/challenge-db',
   entities: [__dirname + '/../entities/*.entity{.ts,.js}'],
   migrations: [__dirname + '/../migrations/*{.ts,.js}'],
   synchronize: false, // Importante: usar migrations, não synchronize

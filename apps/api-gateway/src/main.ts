@@ -1,18 +1,30 @@
 import { NestFactory } from '@nestjs/core';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { ValidationPipe } from '@nestjs/common';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-
+  //validação global
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+  //prefixo global
+  app.setGlobalPrefix('api');
+  //swagger
   const config = new DocumentBuilder()
-    .setTitle('first example')
-    .setDescription('first example of a api using swagger')
+    .setTitle('API Gateway')
+    .setDescription('Gateway de entrada dos microserviços')
     .setVersion('1.0')
-    .addTag('example')
     .build();
-  const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, documentFactory);
-  await app.listen(process.env.PORT ?? 3000);
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, document);
+
+  await app.listen(3001);
 }
 bootstrap();

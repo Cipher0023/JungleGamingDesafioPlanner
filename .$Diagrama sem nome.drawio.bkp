@@ -1,0 +1,83 @@
+<mxfile host="Electron" version="29.0.3">
+  <diagram name="Arquitetura-Correta" id="challenge-architecture">
+    <mxGraphModel dx="1600" dy="1200" grid="1" gridSize="10" guides="1" connect="1" arrows="1" page="1">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- FRONTEND -->
+        <mxCell id="frontend-box" value="Frontend&#10;React + Vite&#10;TanStack Router" style="rounded=1;fillColor=#0050ef;fontColor=#ffffff;strokeColor=#001DBC;align=center;" vertex="1" parent="1">
+          <mxGeometry x="100" y="200" width="220" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- API GATEWAY -->
+        <mxCell id="gateway" value="API Gateway&#10;NestJS&#10;JWT Guard&#10;Rate Limit&#10;Swagger" style="rounded=1;fillColor=#a20025;fontColor=#ffffff;strokeColor=#6F0000;align=center;" vertex="1" parent="1">
+          <mxGeometry x="400" y="200" width="260" height="120" as="geometry"/>
+        </mxCell>
+
+        <!-- AUTH SERVICE -->
+        <mxCell id="auth" value="Auth Service&#10;NestJS + TypeORM&#10;JWT / Refresh Token" style="rounded=1;fillColor=#6a00ff;fontColor=#ffffff;strokeColor=#3700CC;align=center;" vertex="1" parent="1">
+          <mxGeometry x="750" y="80" width="260" height="120" as="geometry"/>
+        </mxCell>
+
+        <!-- TASKS SERVICE -->
+        <mxCell id="tasks" value="Tasks Service&#10;CRUD Tasks&#10;Comments&#10;Audit Log" style="rounded=1;fillColor=#a0522d;fontColor=#ffffff;strokeColor=#6D1F00;align=center;" vertex="1" parent="1">
+          <mxGeometry x="750" y="260" width="260" height="120" as="geometry"/>
+        </mxCell>
+
+        <!-- RABBITMQ -->
+        <mxCell id="rabbit" value="RabbitMQ&#10;AMQP Events" style="rounded=1;fillColor=#ff9800;fontColor=#000000;strokeColor=#cc7a00;align=center;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="260" width="220" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- NOTIFICATIONS -->
+        <mxCell id="notifications" value="Notifications Service&#10;NestJS&#10;WebSocket Gateway" style="rounded=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;align=center;" vertex="1" parent="1">
+          <mxGeometry x="1400" y="260" width="260" height="120" as="geometry"/>
+        </mxCell>
+
+        <!-- DATABASE -->
+        <mxCell id="db" value="PostgreSQL" style="shape=mxgraph.flowchart.database;fillColor=#647687;fontColor=#ffffff;strokeColor=#314354;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="80" width="120" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- CONNECTIONS -->
+        <mxCell id="c1" style="endArrow=block;" edge="1" parent="1" source="frontend-box" target="gateway">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="c2" style="endArrow=block;" edge="1" parent="1" source="gateway" target="auth">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="c3" style="endArrow=block;" edge="1" parent="1" source="gateway" target="tasks">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="c4" style="endArrow=block;dashed=1;" edge="1" parent="1" source="tasks" target="rabbit">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="c5" style="endArrow=block;dashed=1;" edge="1" parent="1" source="rabbit" target="notifications">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="c6" style="endArrow=block;" edge="1" parent="1" source="notifications" target="frontend-box">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="c7" style="endArrow=block;" edge="1" parent="1" source="auth" target="db">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="c8" style="endArrow=block;" edge="1" parent="1" source="tasks" target="db">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="c9" style="endArrow=block;" edge="1" parent="1" source="notifications" target="db">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

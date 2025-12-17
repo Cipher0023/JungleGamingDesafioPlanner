@@ -5,7 +5,7 @@ const dataSource = new DataSource({
   type: "postgres",
   url:
     process.env.DATABASE_URL ||
-    "postgresql://postgres:password@localhost:5432/jungle_db",
+    "postgresql://postgres:password@db:5432/challenge-db",
   entities: [], // Sem entidades para teste
   synchronize: false,
   logging: true,
