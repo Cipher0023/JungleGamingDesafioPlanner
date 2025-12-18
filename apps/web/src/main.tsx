@@ -1,36 +1,69 @@
 import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
-import { RouterProvider, createRouter } from '@tanstack/react-router'
-
-// Import the generated route tree
-import { routeTree } from './routeTree.gen'
-
+import { RouterProvider, createRouter, createRootRoute, createRoute, Outlet, redirect } from '@tanstack/react-router'
+import { Toaster } from 'sonner'
+import { AuthProvider } from './context/AuthContext'
+import { LoginPage } from './routes/login'
+import { TasksPage } from './routes/tasks'
 import './styles.css'
 
-// Create a new router instance
-const router = createRouter({
-  routeTree,
-  context: {},
-  defaultPreload: 'intent',
-  scrollRestoration: true,
-  defaultStructuralSharing: true,
-  defaultPreloadStaleTime: 0,
+// Root route
+const rootRoute = createRootRoute({
+  component: () => (
+    <>
+      <Toaster position="top-right" />
+      <Outlet />
+    </>
+  ),
 })
 
-// Register the router instance for type safety
+// Index route (redirect to login)
+const indexRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/',
+  beforeLoad: () => {
+    throw redirect({ to: '/login' })
+  },
+  component: () => null,
+})
+
+// Login route
+const loginRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/login',
+  component: LoginPage,
+})
+
+// Tasks route
+const tasksRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/tasks',
+  component: TasksPage,
+})
+
+// Route tree
+const routeTree = rootRoute.addChildren([indexRoute, loginRoute, tasksRoute])
+
+// Router
+const router = createRouter({ routeTree })
+
+// Type declaration
 declare module '@tanstack/react-router' {
   interface Register {
     router: typeof router
   }
 }
 
-// Render the app
+// Mount app
 const rootElement = document.getElementById('app')
-if (rootElement && !rootElement.innerHTML) {
+if (rootElement) {
   const root = ReactDOM.createRoot(rootElement)
   root.render(
     <StrictMode>
-      <RouterProvider router={router} />
-    </StrictMode>,
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
+    </StrictMode>
   )
 }
+

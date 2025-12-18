@@ -1,13 +1,19 @@
 import { Module } from '@nestjs/common';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AuthModule } from './modules/auth/auth.module';
-import { TasksModule } from './modules/tasks/tasks.module';
-import { ClientsModule } from './infra/clients/clients.module';
-import { ConfigModule } from './config/config.module';
+import { ProxyModule } from './modules/proxy/proxy.module';
 
 @Module({
-  imports: [AuthModule, TasksModule, ClientsModule, ConfigModule],
+  imports: [
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 600,
+      },
+    ]),
+    ProxyModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

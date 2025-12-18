@@ -1,13 +1,22 @@
 import { NestFactory } from '@nestjs/core';
-import { IoAdapter } from '@nestjs/platform-socket.io';
 import { AppModule } from './app.module';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.useWebSocketAdapter(new IoAdapter(app));
-  
-  const port = process.env.PORT ?? 3000;
-  await app.listen(port);
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+
+  app.setGlobalPrefix('api');
+  await app.listen(process.env.PORT ?? 3004);
+}
+bootstrap();
   console.log(`Notifications Service rodando na porta ${port}`);
 }
 bootstrap();

@@ -14,14 +14,14 @@ export class UsersService {
   async create(createUserDto: {
     email: string;
     password: string;
-    name: string;
+    username: string;
   }): Promise<User> {
-    const hashedPassword = await bcrypt.hash(createUserDto.password, 12);
+    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
     const user = this.usersRepository.create({
       email: createUserDto.email,
       password: hashedPassword,
-      name: createUserDto.name,
+      username: createUserDto.username,
     });
 
     return this.usersRepository.save(user);
