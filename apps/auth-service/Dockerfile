@@ -1,13 +1,22 @@
-FROM node:20-alpine AS development
+FROM node:20-alpine
+
+# Instalar curl para health checks
+RUN apk add --no-cache curl
+
 WORKDIR /app
 
-COPY apps/auth-service/package.json apps/auth-service/package-lock.json* ./apps/auth-service/
+# Copiar package files
+COPY package*.json ./
 
-RUN cd apps/auth-service && npm install
+# Instalar dependências
+RUN npm install
 
-COPY apps/auth-service ./apps/auth-service
+# Copiar código fonte
+COPY . .
 
-WORKDIR /app/apps/auth-service
+# Build
+RUN npm run build
 
 EXPOSE 3002
-CMD ["npm", "run", "start:dev"]
+
+CMD ["npm", "run", "start:prod"]

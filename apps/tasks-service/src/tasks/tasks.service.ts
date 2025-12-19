@@ -25,24 +25,33 @@ export class TasksService {
     private commentRepository: Repository<Comment>,
     @InjectRepository(TaskAssignment)
     private assignmentRepository: Repository<TaskAssignment>,
-    @Inject('RABBITMQ_SERVICE')
-    private client: ClientProxy,
+    // Temporarily disabled
+    // @Inject('RABBITMQ_SERVICE')
+    // private client: ClientProxy,
   ) {}
 
   async create(createTaskDto: CreateTaskDto, userId: string) {
     const task = this.taskRepository.create({
-      ...createTaskDto,
+      title: createTaskDto.title,
+      description: createTaskDto.description,
+      priority: createTaskDto.priority || TaskPriority.MEDIUM,
+      status: createTaskDto.status || TaskStatus.TODO,
       createdBy: userId,
-      dueDate: createTaskDto.dueDate ? new Date(createTaskDto.dueDate) : null,
+      executorId: createTaskDto.executorId || undefined,
+      ...(createTaskDto.dueDate && { dueDate: new Date(createTaskDto.dueDate) }),
     });
+    
     const saved = await this.taskRepository.save(task);
 
+    // Emit event (temporarily disabled)
+    /*
     this.client.emit('task.created', {
       taskId: saved.id,
       title: saved.title,
       createdBy: saved.createdBy,
       timestamp: new Date(),
     });
+    */
 
     return saved;
   }
@@ -81,12 +90,14 @@ export class TasksService {
 
     const result = await this.taskRepository.save(updated);
 
+    /*
     this.client.emit('task.updated', {
       taskId: result.id,
       status: result.status,
       priority: result.priority,
       timestamp: new Date(),
     });
+    */
 
     return result;
   }
@@ -109,6 +120,7 @@ export class TasksService {
 
     const saved = await this.commentRepository.save(comment);
 
+    /*
     this.client.emit('comment.created', {
       commentId: saved.id,
       taskId: saved.taskId,
@@ -116,6 +128,7 @@ export class TasksService {
       content: saved.content,
       timestamp: new Date(),
     });
+    */
 
     return saved;
   }
@@ -148,11 +161,13 @@ export class TasksService {
 
     const saved = await this.assignmentRepository.save(assignment);
 
+    /*
     this.client.emit('task.assigned', {
       taskId,
       userId: assignTaskDto.userId,
       timestamp: new Date(),
     });
+    */
 
     return saved;
   }

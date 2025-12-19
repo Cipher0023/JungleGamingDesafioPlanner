@@ -12,12 +12,13 @@ import { NotificationsService } from './notifications/notifications.service';
 
 @Injectable()
 @WebSocketGateway({
-  port: 3004,
   cors: {
     origin: '*',
   },
 })
-export class NotificationsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+export class NotificationsGateway
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   server: Server;
 
@@ -26,7 +27,7 @@ export class NotificationsGateway implements OnGatewayInit, OnGatewayConnection,
   constructor(private notificationsService: NotificationsService) {}
 
   afterInit() {
-    console.log('WebSocket initialized on port 3004');
+    console.log('WebSocket initialized');
   }
 
   handleConnection(client: Socket) {
@@ -60,7 +61,9 @@ export class NotificationsGateway implements OnGatewayInit, OnGatewayConnection,
     await this.notificationsService.markAsRead(data.notificationId);
     client.emit('notification_read', { notificationId: data.notificationId });
   }
-}
+
+  @SubscribeMessage('test-message')
+  handleTestMessage(client: Socket, data: any) {
     console.log(`Mensagem recebida de ${client.id}:`, data);
     client.emit('test-response', {
       message: 'Mensagem recebida com sucesso!',

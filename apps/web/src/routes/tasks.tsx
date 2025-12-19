@@ -1,26 +1,59 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import { useUsers } from '../hooks/useUsers'
+import { useNotifications } from '../hooks/useNotifications'
+import { CreateTaskModal } from '../components/CreateTaskModal'
+import { TaskCard } from '../components/TaskCard'
+import { TaskDetailsModal } from '../components/TaskDetailsModal'
+import { TaskFilters } from '../components/TaskFilters'
+import { KanbanBoard } from '../components/KanbanBoard'
+import { TaskCardSkeleton } from '../components/ui/skeleton'
+import { LogOut, LayoutGrid, Columns, Wifi, WifiOff } from 'lucide-react'
 
 interface Task {
   id: string
   title: string
   description: string
-  status: string
-  priority: string
-  dueDate: string
+  status: 'TODO' | 'IN_PROGRESS' | 'REVIEW' | 'DONE'
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
+  dueDate?: string
   createdAt: string
+  updatedAt?: string
+  createdBy: string
+  executorId?: string
 }
 
 export const TasksPage = () => {
   const { user, accessToken, logout } = useAuth()
   const navigate = useNavigate()
+  const { getUsernameById, users } = useUsers(accessToken)
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(false)
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [priority, setPriority] = useState('MEDIUM')
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const [viewMode, setViewMode] = useState<'grid' | 'kanban'>('grid')
+
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [priorityFilter, setPriorityFilter] = useState('')
+  const [showOverdueOnly, setShowOverdueOnly] = useState(false)
+
+  // WebSocket notifications
+  const { isConnected } = useNotifications(accessToken, {
+    enabled: true,
+    onNotification: (notification) => {
+      // Refresh tasks when receiving notifications
+      if (
+        notification.type === 'TASK_CREATED' ||
+        notification.type === 'TASK_UPDATED' ||
+        notification.type === 'TASK_DELETED'
+      ) {
+        fetchTasks()
+      }
+    },
+  })
 
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
@@ -32,7 +65,7 @@ export const TasksPage = () => {
   const fetchTasks = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`${apiUrl}/tasks?page=1&size=10`, {
+      const response = await fetch(`${apiUrl}/tasks?page=1&size=100`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       })
       if (response.ok) {
@@ -46,119 +79,197 @@ export const TasksPage = () => {
     }
   }
 
-  const createTask = async (e: React.FormEvent) => {
-    e.preventDefault()
-    try {
-      const response = await fetch(`${apiUrl}/tasks`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ title, description, priority }),
-      })
-
-      if (response.ok) {
-        toast.success('Tarefa criada!')
-        setTitle('')
-        setDescription('')
-        fetchTasks()
+  // Filtered tasks based on search and filters
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((task) => {
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase()
+        if (
+          !task.title.toLowerCase().includes(query) &&
+          !task.description.toLowerCase().includes(query)
+        ) {
+          return false
+        }
       }
-    } catch (error) {
-      toast.error('Erro ao criar tarefa')
-    }
+
+      // Status filter
+      if (statusFilter && task.status !== statusFilter) {
+        return false
+      }
+
+      // Priority filter
+      if (priorityFilter && task.priority !== priorityFilter) {
+        return false
+      }
+
+      // Overdue filter
+      if (showOverdueOnly) {
+        if (!task.dueDate) return false
+        const isOverdue =
+          new Date(task.dueDate) < new Date() && task.status !== 'DONE'
+        if (!isOverdue) return false
+      }
+
+      return true
+    })
+  }, [tasks, searchQuery, statusFilter, priorityFilter, showOverdueOnly])
+
+  const hasActiveFilters =
+    searchQuery !== '' ||
+    statusFilter !== '' ||
+    priorityFilter !== '' ||
+    showOverdueOnly
+
+  const clearFilters = () => {
+    setSearchQuery('')
+    setStatusFilter('')
+    setPriorityFilter('')
+    setShowOverdueOnly(false)
   }
 
   return (
     <div className="bg-gray-50 min-h-screen">
       {/* Header */}
-      <header className="bg-white shadow">
+      <header className="bg-white shadow border-b">
         <div className="flex justify-between items-center mx-auto px-4 py-4 max-w-6xl">
-          <h1 className="font-bold text-2xl">Tarefas</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-gray-600 text-sm">{user?.username}</span>
+          <div>
+            <h1 className="font-bold text-gray-900 text-2xl">Tarefas</h1>
+            <p className="mt-1 text-gray-600 text-sm">
+              Bem-vindo, {user?.username}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            {/* WebSocket Connection Status */}
+            <div
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm ${
+                isConnected
+                  ? 'bg-green-50 text-green-700 border border-green-200'
+                  : 'bg-gray-100 text-gray-600 border border-gray-200'
+              }`}
+              title={isConnected ? 'Conectado em tempo real' : 'Desconectado'}
+            >
+              {isConnected ? (
+                <>
+                  <Wifi className="w-4 h-4" />
+                  <span className="font-medium">Online</span>
+                </>
+              ) : (
+                <>
+                  <WifiOff className="w-4 h-4" />
+                  <span className="font-medium">Offline</span>
+                </>
+              )}
+            </div>
+
+            {/* View Mode Toggle */}
+            <div className="flex items-center gap-1 p-1 border border-gray-300 rounded-lg">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded transition-colors ${
+                  viewMode === 'grid'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                <LayoutGrid className="w-4 h-4" />
+                <span className="font-medium text-sm">Grade</span>
+              </button>
+              <button
+                onClick={() => setViewMode('kanban')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded transition-colors ${
+                  viewMode === 'kanban'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                <Columns className="w-4 h-4" />
+                <span className="font-medium text-sm">Kanban</span>
+              </button>
+            </div>
+
+            <CreateTaskModal
+              accessToken={accessToken!}
+              onTaskCreated={fetchTasks}
+            />
             <button
               onClick={logout}
-              className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-white"
+              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-white transition-colors"
             >
-              Logout
+              <LogOut className="w-4 h-4" />
+              Sair
             </button>
           </div>
         </div>
       </header>
 
       <main className="mx-auto px-4 py-8 max-w-6xl">
-        {/* Create Task Form */}
-        <div className="bg-white shadow mb-8 p-6 rounded-lg">
-          <h2 className="mb-4 font-semibold text-xl">Nova Tarefa</h2>
-          <form onSubmit={createTask} className="space-y-4">
-            <input
-              type="text"
-              placeholder="Título"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg w-full"
-              required
-            />
-            <textarea
-              placeholder="Descrição"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg w-full"
-              rows={3}
-              required
-            />
-            <select
-              value={priority}
-              onChange={(e) => setPriority(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg w-full"
-            >
-              <option>LOW</option>
-              <option>MEDIUM</option>
-              <option>HIGH</option>
-              <option>URGENT</option>
-            </select>
-            <button
-              type="submit"
-              className="bg-blue-600 hover:bg-blue-700 py-2 rounded-lg w-full text-white"
-            >
-              Criar Tarefa
-            </button>
-          </form>
-        </div>
+        {/* Filters */}
+        <TaskFilters
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+          priorityFilter={priorityFilter}
+          onPriorityFilterChange={setPriorityFilter}
+          showOverdueOnly={showOverdueOnly}
+          onShowOverdueChange={setShowOverdueOnly}
+          onClearFilters={clearFilters}
+          hasActiveFilters={hasActiveFilters}
+        />
 
-        {/* Tasks List */}
-        <div className="space-y-4">
-          {loading ? (
-            <div className="py-8 text-center">Carregando...</div>
-          ) : tasks.length === 0 ? (
-            <div className="py-8 text-gray-500 text-center">Nenhuma tarefa</div>
-          ) : (
-            tasks.map((task) => (
-              <div
-                key={task.id}
-                className="bg-white shadow hover:shadow-lg p-6 rounded-lg transition cursor-pointer"
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-semibold text-lg">{task.title}</h3>
-                  <span
-                    className={`px-3 py-1 rounded-full text-sm font-medium ${task.priority === 'URGENT' ? 'bg-red-100 text-red-700' : task.priority === 'HIGH' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`}
-                  >
-                    {task.priority}
-                  </span>
-                </div>
-                <p className="mb-2 text-gray-600">
-                  {task.description.substring(0, 100)}...
-                </p>
-                <div className="flex justify-between items-center text-gray-500 text-sm">
-                  <span>Status: {task.status}</span>
-                  <span>{new Date(task.createdAt).toLocaleDateString()}</span>
-                </div>
+        {/* Tasks View */}
+        {viewMode === 'kanban' ? (
+          <KanbanBoard
+            tasks={filteredTasks}
+            onTaskClick={setSelectedTask}
+            getUsernameById={getUsernameById}
+            loading={loading}
+          />
+        ) : (
+          <div className="gap-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            {loading ? (
+              // Grid de skeletons durante carregamento
+              Array.from({ length: 6 }).map((_, index) => (
+                <TaskCardSkeleton key={index} />
+              ))
+            ) : filteredTasks.length === 0 ? (
+              <div className="col-span-full py-8 text-gray-500 text-center">
+                {hasActiveFilters
+                  ? 'Nenhuma tarefa encontrada com os filtros aplicados'
+                  : 'Nenhuma tarefa encontrada'}
               </div>
-            ))
-          )}
-        </div>
+            ) : (
+              filteredTasks.map((task) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  onClick={() => setSelectedTask(task)}
+                  creatorName={getUsernameById(task.createdBy)}
+                  executorName={
+                    task.executorId
+                      ? getUsernameById(task.executorId)
+                      : undefined
+                  }
+                />
+              ))
+            )}
+          </div>
+        )}
       </main>
+
+      {/* Task Details Modal */}
+      {selectedTask && (
+        <TaskDetailsModal
+          task={selectedTask}
+          isOpen={!!selectedTask}
+          onClose={() => setSelectedTask(null)}
+          onUpdate={fetchTasks}
+          onDelete={fetchTasks}
+          accessToken={accessToken!}
+          users={users}
+        />
+      )}
     </div>
   )
 }

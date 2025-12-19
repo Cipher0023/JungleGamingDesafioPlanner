@@ -1,21 +1,22 @@
-# Development image for NestJS
-FROM node:20-alpine AS development
+FROM node:20-alpine
+
+# Instalar curl para health checks
+RUN apk add --no-cache curl
+
 WORKDIR /app
 
-# Copiar package.json específico
-COPY apps/tasks-service/package.json apps/tasks-service/package-lock.json* ./apps/tasks-service/
+# Copiar package files
+COPY package*.json ./
 
 # Instalar dependências
-RUN cd apps/tasks-service && npm install
+RUN npm install
 
-# Copiar código do serviço
-COPY apps/tasks-service ./apps/tasks-service
+# Copiar código fonte
+COPY . .
 
-# Definir diretório de trabalho
-WORKDIR /app/apps/tasks-service
+# Build
+RUN npm run build
 
-# Porta do serviço
 EXPOSE 3003
 
-# Rodar Nest em dev
-CMD ["npm", "run", "start:dev"]
+CMD ["npm", "run", "start:prod"]

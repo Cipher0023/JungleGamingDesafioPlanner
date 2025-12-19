@@ -22,7 +22,37 @@ export class ProxyController {
     return this.forwardRequest(request, response, 'http://auth-service:3002', path);
   }
 
-  // Rota para tasks service
+  // Rota para users (lista de usuários) - base
+  @All('users')
+  async handleUsersBaseRequests(
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
+    const path = request.url.replace(/^\/api/, '');
+    return this.forwardRequest(request, response, 'http://auth-service:3002', `/api${path}`);
+  }
+
+  // Rota para users (lista de usuários) - sub-rotas
+  @All('users/*path')
+  async handleUsersRequests(
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
+    const path = request.url.replace(/^\/api/, '');
+    return this.forwardRequest(request, response, 'http://auth-service:3002', `/api${path}`);
+  }
+
+  // Rota para tasks service (base)
+  @All('tasks')
+  async handleTasksBaseRequests(
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
+    const path = request.url.replace(/^\/api/, '');
+    return this.forwardRequest(request, response, 'http://tasks-service:3003', `/api${path}`);
+  }
+
+  // Rota para tasks service (sub-rotas)
   @All('tasks/*')
   async handleTasksRequests(
     @Req() request: Request,
@@ -42,11 +72,25 @@ export class ProxyController {
     try {
       const fullUrl = `${targetUrl}${path}`;
       
+      // Extract userId from JWT if present
+      const headers: Record<string, string | string[] | undefined> = { ...request.headers };
+      const authHeader = request.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.substring(7);
+        try {
+          // Simple JWT decode (base64)
+          const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+          headers['x-user-id'] = payload.sub || payload.id || payload.userId;
+        } catch (e) {
+          // If JWT decode fails, continue without user id
+        }
+      }
+      
       const result = await this.proxyService.forwardRequest(
         request.method,
         fullUrl,
         request.body,
-        request.headers as any,
+        headers,
       );
 
       response.send(result);

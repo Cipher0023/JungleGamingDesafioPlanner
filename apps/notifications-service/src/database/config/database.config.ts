@@ -9,7 +9,7 @@ export const dataSourceOptions: DataSourceOptions = {
   port: parseInt(process.env.DB_PORT || '5432'),
   username: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || 'password',
-  database: process.env.DB_NAME || 'challenge_db',
+  database: process.env.DB_NAME || 'challenge-db',
   entities: [__dirname + '/../entities/**/*.entity{.ts,.js}'],
   migrations: [__dirname + '/../migrations/*{.ts,.js}'],
   synchronize: false,

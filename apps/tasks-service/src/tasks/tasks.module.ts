@@ -10,6 +10,8 @@ import { TaskAssignment } from '../database/entities/task-assignment.entity';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Task, Comment, TaskAssignment]),
+    // Temporarily disabled RabbitMQ to test
+    /*
     ClientsModule.register([
       {
         name: 'RABBITMQ_SERVICE',
@@ -23,6 +25,7 @@ import { TaskAssignment } from '../database/entities/task-assignment.entity';
         },
       },
     ]),
+    */
   ],
   controllers: [TasksController],
   providers: [TasksService],

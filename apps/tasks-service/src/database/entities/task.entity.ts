@@ -34,8 +34,11 @@ export class Task {
   @Column({ type: 'text' })
   description: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: 'uuid', name: 'createdById' })
   createdBy: string;
+
+  @Column({ type: 'uuid', name: 'executorId', nullable: true })
+  executorId?: string;
 
   @Column({ type: 'enum', enum: TaskStatus, default: TaskStatus.TODO })
   status: TaskStatus;

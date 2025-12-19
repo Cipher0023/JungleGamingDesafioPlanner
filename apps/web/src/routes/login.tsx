@@ -1,55 +1,65 @@
-import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useAuth } from '../context/AuthContext'
 import { toast } from 'sonner'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  loginSchema,
+  registerSchema,
+  type LoginFormData,
+  type RegisterFormData,
+} from '../lib/validations'
 
 export const LoginPage = () => {
   const navigate = useNavigate()
   const { login, register } = useAuth()
-  
-  // Login state
-  const [loginEmail, setLoginEmail] = useState('')
-  const [loginPassword, setLoginPassword] = useState('')
-  const [loginLoading, setLoginLoading] = useState(false)
-  
-  // Register state
-  const [registerEmail, setRegisterEmail] = useState('')
-  const [registerUsername, setRegisterUsername] = useState('')
-  const [registerPassword, setRegisterPassword] = useState('')
-  const [registerLoading, setRegisterLoading] = useState(false)
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoginLoading(true)
+  // Login form with react-hook-form + zod
+  const {
+    register: registerLogin,
+    handleSubmit: handleSubmitLogin,
+    formState: { errors: loginErrors, isSubmitting: loginLoading },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+  })
 
+  // Register form with react-hook-form + zod
+  const {
+    register: registerRegister,
+    handleSubmit: handleSubmitRegister,
+    formState: { errors: registerErrors, isSubmitting: registerLoading },
+  } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
+  })
+
+  const onLoginSubmit = async (data: LoginFormData) => {
     try {
-      await login(loginEmail, loginPassword)
+      await login(data.email, data.password)
       toast.success('Login realizado com sucesso!')
       navigate({ to: '/tasks' })
     } catch (error: any) {
       toast.error(error.message || 'Erro ao fazer login')
-    } finally {
-      setLoginLoading(false)
     }
   }
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setRegisterLoading(true)
-
+  const onRegisterSubmit = async (data: RegisterFormData) => {
     try {
-      await register(registerEmail, registerUsername, registerPassword)
+      await register(data.email, data.username, data.password)
       toast.success('Conta criada! Você já está logado')
       navigate({ to: '/tasks' })
     } catch (error: any) {
       toast.error(error.message || 'Erro ao criar conta')
-    } finally {
-      setRegisterLoading(false)
     }
   }
 
@@ -58,7 +68,9 @@ export const LoginPage = () => {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">Task Manager</CardTitle>
-          <CardDescription>Gerencie suas tarefas de forma colaborativa</CardDescription>
+          <CardDescription>
+            Gerencie suas tarefas de forma colaborativa
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
@@ -66,19 +78,25 @@ export const LoginPage = () => {
               <TabsTrigger value="login">Login</TabsTrigger>
               <TabsTrigger value="register">Registrar</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="login">
-              <form onSubmit={handleLogin} className="space-y-4">
+              <form
+                onSubmit={handleSubmitLogin(onLoginSubmit)}
+                className="space-y-4"
+              >
                 <div className="space-y-2">
                   <Label htmlFor="login-email">Email</Label>
                   <Input
                     id="login-email"
                     type="email"
                     placeholder="seu@email.com"
-                    value={loginEmail}
-                    onChange={(e) => setLoginEmail(e.target.value)}
-                    required
+                    {...registerLogin('email')}
                   />
+                  {loginErrors.email && (
+                    <p className="text-red-500 text-sm">
+                      {loginErrors.email.message}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="login-password">Senha</Label>
@@ -86,54 +104,75 @@ export const LoginPage = () => {
                     id="login-password"
                     type="password"
                     placeholder="••••••••"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    required
+                    {...registerLogin('password')}
                   />
+                  {loginErrors.password && (
+                    <p className="text-red-500 text-sm">
+                      {loginErrors.password.message}
+                    </p>
+                  )}
                 </div>
-                <Button type="submit" className="w-full" disabled={loginLoading}>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={loginLoading}
+                >
                   {loginLoading ? 'Entrando...' : 'Entrar'}
                 </Button>
               </form>
             </TabsContent>
-            
+
             <TabsContent value="register">
-              <form onSubmit={handleRegister} className="space-y-4">
+              <form
+                onSubmit={handleSubmitRegister(onRegisterSubmit)}
+                className="space-y-4"
+              >
                 <div className="space-y-2">
                   <Label htmlFor="register-email">Email</Label>
                   <Input
                     id="register-email"
                     type="email"
                     placeholder="seu@email.com"
-                    value={registerEmail}
-                    onChange={(e) => setRegisterEmail(e.target.value)}
-                    required
+                    {...registerRegister('email')}
                   />
+                  {registerErrors.email && (
+                    <p className="text-red-500 text-sm">
+                      {registerErrors.email.message}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="register-username">Username (mínimo 3 caracteres)</Label>
+                  <Label htmlFor="register-username">Username</Label>
                   <Input
                     id="register-username"
                     placeholder="seu_usuario"
-                    value={registerUsername}
-                    onChange={(e) => setRegisterUsername(e.target.value)}
-                    minLength={3}
-                    required
+                    {...registerRegister('username')}
                   />
+                  {registerErrors.username && (
+                    <p className="text-red-500 text-sm">
+                      {registerErrors.username.message}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="register-password">Senha (mínimo 6 caracteres)</Label>
+                  <Label htmlFor="register-password">Senha</Label>
                   <Input
                     id="register-password"
                     type="password"
                     placeholder="••••••••"
-                    value={registerPassword}
-                    onChange={(e) => setRegisterPassword(e.target.value)}
-                    minLength={6}
-                    required
+                    {...registerRegister('password')}
                   />
+                  {registerErrors.password && (
+                    <p className="text-red-500 text-sm">
+                      {registerErrors.password.message}
+                    </p>
+                  )}
                 </div>
-                <Button type="submit" className="w-full" disabled={registerLoading}>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={registerLoading}
+                >
                   {registerLoading ? 'Criando...' : 'Criar Conta'}
                 </Button>
               </form>

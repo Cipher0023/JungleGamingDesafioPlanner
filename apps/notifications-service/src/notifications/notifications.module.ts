@@ -4,6 +4,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { NotificationsService } from './notifications.service';
 import { Notification } from '../database/entities/notification.entity';
 import { NotificationsConsumer } from './notifications.consumer';
+import { NotificationsGateway } from '../notifications.gateway';
 
 @Module({
   imports: [
@@ -22,7 +23,11 @@ import { NotificationsConsumer } from './notifications.consumer';
       },
     ]),
   ],
-  providers: [NotificationsService, NotificationsConsumer],
-  exports: [NotificationsService],
+  providers: [
+    NotificationsService,
+    NotificationsConsumer,
+    NotificationsGateway,
+  ],
+  exports: [NotificationsService, NotificationsGateway],
 })
 export class NotificationsModule {}

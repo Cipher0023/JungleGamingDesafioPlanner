@@ -16,7 +16,7 @@ export class Comment {
   @Column({ type: 'text' })
   content: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: 'uuid', name: 'userId' })
   authorId: string;
 
   @Column({ type: 'uuid' })

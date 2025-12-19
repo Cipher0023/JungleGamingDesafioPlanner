@@ -1,17 +1,22 @@
-FROM node:20-alpine AS development
+FROM node:20-alpine
+
+# Instalar curl para health checks
+RUN apk add --no-cache curl
 
 WORKDIR /app
 
-# Copia apenas os manifests para instalar dependências
-COPY apps/api-gateway/package.json apps/api-gateway/package-lock.json* ./apps/api-gateway/
+# Copiar package files
+COPY package*.json ./
 
-RUN cd apps/api-gateway && npm install
+# Instalar dependências
+RUN npm install
 
-# Copia o restante do código
-COPY apps/api-gateway ./apps/api-gateway
+# Copiar código fonte
+COPY . .
 
-WORKDIR /app/apps/api-gateway
+# Build
+RUN npm run build
 
 EXPOSE 3001
 
-CMD ["npm", "run", "start:dev"]
+CMD ["npm", "run", "start:prod"]

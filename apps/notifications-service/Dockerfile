@@ -1,21 +1,22 @@
-# Development image for NestJS
-FROM node:20-alpine AS development
+FROM node:20-alpine
+
+# Instalar curl para health checks
+RUN apk add --no-cache curl
+
 WORKDIR /app
 
-# Copiar package.json específico do serviço
-COPY apps/notifications-service/package.json apps/notifications-service/package-lock.json* ./apps/notifications-service/
+# Copiar package files
+COPY package*.json ./
 
 # Instalar dependências
-RUN cd apps/notifications-service && npm install
+RUN npm install
 
-# Copiar o código completo do serviço
-COPY apps/notifications-service ./apps/notifications-service
+# Copiar código fonte
+COPY . .
 
-# Definir diretório de trabalho final
-WORKDIR /app/apps/notifications-service
+# Build
+RUN npm run build
 
-# Expor porta
 EXPOSE 3004
 
-# Rodar Nest em modo dev (watch)
-CMD ["npm", "run", "start:dev"]
+CMD ["npm", "run", "start:prod"]

@@ -3,20 +3,26 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  try {
+    console.log('Creating Nest application...');
+    const app = await NestFactory.create(AppModule);
 
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  );
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
+    );
 
-  app.setGlobalPrefix('api');
-  await app.listen(process.env.PORT ?? 3004);
-}
-bootstrap();
-  console.log(`Notifications Service rodando na porta ${port}`);
+    const port = process.env.PORT ?? 3004;
+    app.setGlobalPrefix('api');
+    console.log(`Attempting to listen on port ${port}...`);
+    await app.listen(port);
+    console.log(`✅ Notifications Service running on port ${port}`);
+  } catch (error) {
+    console.error('❌ Failed to start Notifications Service:', error);
+    process.exit(1);
+  }
 }
 bootstrap();
