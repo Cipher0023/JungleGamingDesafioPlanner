@@ -419,31 +419,8 @@ TASKS_SERVICE_URL=http://tasks-service:3003
 
 ---
 
-## 🤝 Contribuindo
-
-1. Fork o projeto
-2. Crie uma branch (`git checkout -b feature/MinhaFeature`)
-3. Commit suas mudanças (`git commit -m 'Add: Nova feature'`)
-4. Push para a branch (`git push origin feature/MinhaFeature`)
-5. Abra um Pull Request
-
----
-
 ## 📄 Licença
 
 MIT License - veja [LICENSE](LICENSE) para detalhes.
 
 ---
-
-## 👨‍💻 Autor
-
-Desenvolvido como desafio técnico para demonstração de habilidades em:
-
-- Arquitetura de microserviços
-- Backend com NestJS e TypeScript
-- Frontend moderno com React
-- Docker e orquestração de containers
-- Comunicação assíncrona e tempo real
-- Boas práticas de segurança e validação
-
-**Contato:** [Seu Email/LinkedIn]
